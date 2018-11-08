@@ -36,7 +36,6 @@ import io.druid.timeline.DataSegment;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.HadoopFsWrapper;
 import org.apache.hadoop.fs.Path;
 import org.joda.time.format.ISODateTimeFormat;
 
@@ -101,9 +100,9 @@ public class HdfsDataSegmentPusher implements DataSegmentPusher
     );
 
     Path tmpIndexFile = new Path(StringUtils.format(
-        "%s/%s/%s/%s_index.zip",
+        "%s/%s/_temporary/attempt_%s/%s_index.zip",
         fullyQualifiedStorageDirectory,
-        segment.getDataSource(),
+        storageDir,
         UUIDUtils.generateUuid(),
         segment.getShardSpec().getPartitionNum()
     ));
@@ -170,7 +169,7 @@ public class HdfsDataSegmentPusher implements DataSegmentPusher
 
   private void copyFilesWithChecks(final FileSystem fs, final Path from, final Path to) throws IOException
   {
-    if (!HadoopFsWrapper.rename(fs, from, to)) {
+    if (!fs.rename(from, to)) {
       if (fs.exists(to)) {
         log.info(
             "Unable to rename temp file [%s] to segment path [%s], it may have already been pushed by a replica task.",
